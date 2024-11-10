@@ -16,6 +16,17 @@ export const Index: Record<string, any> = {
       subcategory: "undefined",
       chunks: []
     },
+    "chatbot": {
+      name: "chatbot",
+      type: "registry:ui",
+      registryDependencies: undefined,
+      files: ["registry/new-york/ui/chatbot.tsx","registry/new-york/api/chat/route.ts","registry/new-york/hooks/use-mobile.tsx"],
+      component: React.lazy(() => import("@/registry/new-york/ui/chatbot.tsx")),
+      source: "",
+      category: "undefined",
+      subcategory: "undefined",
+      chunks: []
+    },
     "accordion-demo": {
       name: "accordion-demo",
       type: "registry:example",
@@ -78,6 +89,17 @@ export const Index: Record<string, any> = {
       registryDependencies: undefined,
       files: ["registry/default/ui/accordion.tsx"],
       component: React.lazy(() => import("@/registry/default/ui/accordion.tsx")),
+      source: "",
+      category: "undefined",
+      subcategory: "undefined",
+      chunks: []
+    },
+    "chatbot": {
+      name: "chatbot",
+      type: "registry:ui",
+      registryDependencies: undefined,
+      files: ["registry/default/ui/chatbot.tsx","registry/default/api/chat/route.ts","registry/default/hooks/use-mobile.tsx"],
+      component: React.lazy(() => import("@/registry/default/ui/chatbot.tsx")),
       source: "",
       category: "undefined",
       subcategory: "undefined",
