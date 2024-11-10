@@ -1,0 +1,27 @@
+{
+  "name": "shadcn-registry-starter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build-registry": "tsx ./scripts/build-registry.mts",
+    "dev": "http-server"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.5.5",
+    "dotenv": "^16.4.5",
+    "http-server": "^14.1.1",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2"
+  },
+  "dependencies": {
+    "lodash.template": "^4.5.0",
+    "rimraf": "^6.0.1",
+    "ts-morph": "^23.0.0",
+    "zod": "^3.23.8"
+  }
+}
