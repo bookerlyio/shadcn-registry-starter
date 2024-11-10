@@ -64,8 +64,8 @@ interface ChatBotProps {
 
 export default function ChatBot({
   initialMessage = "👋 Hey there! I'm an AI Chatbot.\n\nFeel free to ask me anything!",
-  title = "Chatbot",
-  description = "AI Agent",
+  title = "AI Chatbot",
+  description = "By druid/ui",
   descriptionIcon: DescriptionIcon = Sparkles,
   botIcon: BotIcon = Bot,
   chatIcon: ChatIcon = MessageCircle,
