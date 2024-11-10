@@ -63,9 +63,9 @@ interface ChatBotProps {
 }
 
 export default function ChatBot({
-  initialMessage = "👋 Hey there! I'm an AI assistant.\n\nFeel free to ask me anything!",
-  title = "Shadcn",
-  description = "AI Chatbot",
+  initialMessage = "👋 Hey there! I'm an AI Chatbot.\n\nFeel free to ask me anything!",
+  title = "Chatbot",
+  description = "AI Agent",
   descriptionIcon: DescriptionIcon = Sparkles,
   botIcon: BotIcon = Bot,
   chatIcon: ChatIcon = MessageCircle,

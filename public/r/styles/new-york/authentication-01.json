@@ -2,10 +2,10 @@
   "name": "authentication-01",
   "type": "registry:block",
   "registryDependencies": [
-    "http://localhost:8080/r/styles/new-york/button.json",
-    "http://localhost:8080/r/styles/new-york/card.json",
-    "http://localhost:8080/r/styles/new-york/input.json",
-    "http://localhost:8080/r/styles/new-york/label.json"
+    "https://raw.githubusercontent.com/druidui/shadcn-registry-starter/refs/heads/main/public/r//styles/new-york/button.json",
+    "https://raw.githubusercontent.com/druidui/shadcn-registry-starter/refs/heads/main/public/r//styles/new-york/card.json",
+    "https://raw.githubusercontent.com/druidui/shadcn-registry-starter/refs/heads/main/public/r//styles/new-york/input.json",
+    "https://raw.githubusercontent.com/druidui/shadcn-registry-starter/refs/heads/main/public/r//styles/new-york/label.json"
   ],
   "files": [
     {
