@@ -1,5 +1,7 @@
 # Druid UI Components
 
+Demo: [druid/ui](https://www.druidui.com/)
+
 A collection of beautiful crafted UI components built with shadcn/ui and Tailwind CSS - [shadcn/ui](https://ui.shadcn.com/) (I am not affiliated or endorsed by shadcn or Vercel).
 
 ## Features
