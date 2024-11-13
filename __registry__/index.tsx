@@ -5,17 +5,6 @@ import * as React from "react"
 
 export const Index: Record<string, any> = {
   "new-york": {
-    "accordion": {
-      name: "accordion",
-      type: "registry:ui",
-      registryDependencies: undefined,
-      files: ["registry/new-york/ui/accordion.tsx"],
-      component: React.lazy(() => import("@/registry/new-york/ui/accordion.tsx")),
-      source: "",
-      category: "undefined",
-      subcategory: "undefined",
-      chunks: []
-    },
     "chatbot": {
       name: "chatbot",
       type: "registry:ui",
@@ -83,17 +72,6 @@ export const Index: Record<string, any> = {
       chunks: []
     },
   },  "default": {
-    "accordion": {
-      name: "accordion",
-      type: "registry:ui",
-      registryDependencies: undefined,
-      files: ["registry/default/ui/accordion.tsx"],
-      component: React.lazy(() => import("@/registry/default/ui/accordion.tsx")),
-      source: "",
-      category: "undefined",
-      subcategory: "undefined",
-      chunks: []
-    },
     "chatbot": {
       name: "chatbot",
       type: "registry:ui",
