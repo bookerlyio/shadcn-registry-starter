@@ -2,10 +2,10 @@
   "name": "authentication-01",
   "type": "registry:block",
   "registryDependencies": [
-    "http://localhost:8080/r/styles/default/button.json",
-    "http://localhost:8080/r/styles/default/card.json",
-    "http://localhost:8080/r/styles/default/input.json",
-    "http://localhost:8080/r/styles/default/label.json"
+    "https://raw.githubusercontent.com/druidui/shadcn-registry-starter/refs/heads/main/public/r//styles/default/button.json",
+    "https://raw.githubusercontent.com/druidui/shadcn-registry-starter/refs/heads/main/public/r//styles/default/card.json",
+    "https://raw.githubusercontent.com/druidui/shadcn-registry-starter/refs/heads/main/public/r//styles/default/input.json",
+    "https://raw.githubusercontent.com/druidui/shadcn-registry-starter/refs/heads/main/public/r//styles/default/label.json"
   ],
   "files": [
     {
