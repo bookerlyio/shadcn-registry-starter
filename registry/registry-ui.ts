@@ -36,6 +36,8 @@ export const ui: Registry = [
       "react-timeago",
       "@types/react-timeago",
       "@ai-sdk/anthropic",
+      "@upstash/ratelimit",
+      "@upstash/redis",
       "lucide-react",
       "ai",
     ],

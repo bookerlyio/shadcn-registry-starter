@@ -2,39 +2,45 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useChat } from "ai/react";
-import TimeAgo from "react-timeago";
 import {
-  MessageCircle,
+  MessageSquare,
   ChevronDown,
-  Send,
-  ChevronLeft,
   Sparkles,
   Bot,
   LucideIcon,
 } from "lucide-react";
 
+import {
+  FaArrowUp as ArrowUp,
+  FaChevronLeft as ChevronLeft,
+} from "react-icons/fa6";
+
 import { Button } from "./button";
 import { Card } from "./card";
 import { Input } from "./input";
 import { ScrollArea } from "./scroll-area";
-import { Avatar, AvatarFallback } from "./avatar";
+import { Avatar } from "./avatar";
 
 import { useIsMobile } from "@/hooks/use-mobile";
+import dynamic from "next/dynamic";
 
 interface ChatMessage {
   id: string;
   role: "function" | "assistant" | "system" | "user" | "data" | "tool";
   content: string;
   createdAt: Date;
+  isTyping?: boolean;
 }
 
 interface ChatBotProps {
+  fixed?: boolean;
+  open?: boolean;
   initialMessage?: string;
   title?: string;
   description?: string;
   descriptionIcon?: LucideIcon;
-  botIcon?: LucideIcon;
-  chatIcon?: LucideIcon;
+  botIcon?: LucideIcon | string;
+  chatIcon?: LucideIcon | string;
   placeholderText?: string;
   position?: "bottom-right" | "bottom-left" | "top-right" | "top-left";
   width?: string;
@@ -42,64 +48,84 @@ interface ChatBotProps {
   mobileFullScreen?: boolean;
   showTimestamp?: boolean;
   showAvatar?: boolean;
-  roundedCorners?:
-    | "rounded-none"
-    | "rounded-sm"
-    | "rounded-md"
-    | "rounded-lg"
-    | "rounded-xl"
-    | "rounded-full";
-  buttonRoundedCorners?:
-    | "rounded-none"
-    | "rounded-sm"
-    | "rounded-md"
-    | "rounded-lg"
-    | "rounded-xl"
-    | "rounded-full";
+  buttonRoundedCorners?: string;
   animated?: boolean;
   customStyles?: React.CSSProperties;
+  model?: string;
+  systemPrompt?: string;
   onSendMessage?: (message: string) => void;
   onReceiveMessage?: (message: string) => void;
+  onOpenChange?: (open: boolean) => void;
 }
 
+const ClientTimeAgo = dynamic(() => import("react-timeago"), {
+  ssr: false,
+});
+
+const IconOrImage = ({
+  icon: IconOrUrl,
+  className = "",
+  imgClassName = "",
+}: {
+  icon: LucideIcon | string;
+  className?: string;
+  imgClassName?: string;
+}) => {
+  if (typeof IconOrUrl === "string") {
+    return <img src={IconOrUrl} alt="Icon" className={imgClassName} />;
+  }
+  const Icon = IconOrUrl;
+  return <Icon className={className} />;
+};
+
 export default function ChatBot({
+  fixed = true,
+  open = false,
   initialMessage = "👋 Hey there! I'm an AI Chatbot.\n\nFeel free to ask me anything!",
   title = "AI Chatbot",
   description = "By druid/ui",
   descriptionIcon: DescriptionIcon = Sparkles,
   botIcon: BotIcon = Bot,
-  chatIcon: ChatIcon = MessageCircle,
+  chatIcon: ChatIcon = MessageSquare,
   placeholderText = "Ask a question...",
   position = "bottom-right",
   width = "400px",
-  height = "600px",
+  height = "704px",
   mobileFullScreen = true,
   showTimestamp = true,
   showAvatar = true,
-  roundedCorners = "rounded-md",
   buttonRoundedCorners = "rounded-full",
   animated = true,
   customStyles = {},
+  model,
+  systemPrompt,
   onSendMessage,
   onReceiveMessage,
+  onOpenChange,
 }: ChatBotProps = {}) {
   const isMobile = useIsMobile();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(open);
   const {
     messages: rawChatMessages,
     input,
     handleInputChange,
     handleSubmit: handleChatSubmit,
+    isLoading,
   } = useChat({
     initialMessages: [
       {
         id: "1",
         role: "assistant",
         content: initialMessage,
-        createdAt: new Date(),
+        createdAt: new Date(Date.now()),
       },
     ],
     keepLastMessageOnError: true,
+    api: "/api/chat",
+    body: {
+      systemPrompt,
+      model,
+    },
   });
 
   const chatMessages = rawChatMessages.map((message) => ({
@@ -108,51 +134,51 @@ export default function ChatBot({
   }));
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const userScrollRef = useRef(false);
-
-  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
-    const scrollArea = event.currentTarget.querySelector(
-      "[data-radix-scroll-area-viewport]"
-    );
-    if (!scrollArea) return;
-    const isScrolledToBottom =
-      Math.abs(
-        scrollArea.scrollHeight - scrollArea.scrollTop - scrollArea.clientHeight
-      ) < 25;
-    userScrollRef.current = !isScrolledToBottom;
-  };
-
-  const isNearBottom = () => {
-    const scrollArea =
-      scrollRef.current?.parentElement?.parentElement?.querySelector(
-        "[data-radix-scroll-area-viewport]"
-      );
-    if (!scrollArea) return true;
-    return (
-      Math.abs(
-        scrollArea.scrollHeight - scrollArea.scrollTop - scrollArea.clientHeight
-      ) < 25
-    );
-  };
+  const prevMessagesLength = useRef(chatMessages.length);
+  const [hasOverflow, setHasOverflow] = useState(false);
+  const [isScrolledTop, setIsScrolledTop] = useState(true);
 
   useEffect(() => {
-    if (scrollRef.current && (!userScrollRef.current || isNearBottom())) {
-      const timeoutId = setTimeout(() => {
-        scrollRef.current?.scrollIntoView({
-          behavior: animated ? "smooth" : "auto",
-          block: "end",
+    if (
+      scrollRef.current &&
+      prevMessagesLength.current !== chatMessages.length
+    ) {
+      const scrollArea = scrollRef.current.closest(
+        "[data-radix-scroll-area-viewport]"
+      );
+      if (scrollArea) {
+        scrollArea.scrollTo({
+          top: scrollArea.scrollHeight,
+          behavior: "smooth",
         });
-      }, 100);
-      return () => clearTimeout(timeoutId);
+      }
+      prevMessagesLength.current = chatMessages.length;
     }
-  }, [chatMessages, animated]);
+  }, [chatMessages]);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    const scrollArea = scrollRef.current?.closest(
+      "[data-radix-scroll-area-viewport]"
+    );
+    if (scrollArea) {
+      setHasOverflow(scrollArea.scrollHeight > scrollArea.clientHeight);
+
+      const handleScroll = () => {
+        setIsScrolledTop(scrollArea.scrollTop === 0);
+      };
+
+      scrollArea.addEventListener("scroll", handleScroll);
+      return () => scrollArea.removeEventListener("scroll", handleScroll);
+    }
+  }, [chatMessages]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (onSendMessage) {
       onSendMessage(input);
     }
-    handleChatSubmit(e);
+
+    await handleChatSubmit(e);
   };
 
   useEffect(() => {
@@ -164,105 +190,179 @@ export default function ChatBot({
     }
   }, [chatMessages, onReceiveMessage]);
 
-  const positionClass = {
-    "bottom-right": "bottom-6 right-6",
-    "bottom-left": "bottom-6 left-6",
-    "top-right": "top-6 right-6",
-    "top-left": "top-6 left-6",
-  }[position];
+  const positionClasses = {
+    "bottom-right": {
+      button: "bottom-4 right-4",
+      chatbot: "bottom-12 right-4",
+    },
+    "bottom-left": {
+      button: "bottom-4 left-4",
+      chatbot: "bottom-12 left-4",
+    },
+    "top-right": {
+      button: "top-4 right-4",
+      chatbot: "top-20 right-4",
+    },
+    "top-left": {
+      button: "top-4 left-4",
+      chatbot: "top-20 left-4",
+    },
+  };
+
+  const buttonPositionClass = fixed ? positionClasses[position].button : "";
+
+  useEffect(() => {
+    setIsOpen(open);
+  }, [open]);
+
+  useEffect(() => {
+    onOpenChange?.(isOpen);
+  }, [isOpen, onOpenChange]);
+
+  const handleToggle = () => {
+    setIsOpen((prev) => !prev);
+  };
+
+  const TypingAnimation = () => (
+    <div className="flex space-x-1 p-4 bg-border/60 max-w-auto whitespace-pre-wrap rounded-md mr-8">
+      <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.3s]" />
+      <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce [animation-delay:-0.15s]" />
+      <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce" />
+    </div>
+  );
+
+  useEffect(() => {
+    if (isMobile && mobileFullScreen && isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobile, mobileFullScreen, isOpen]);
 
   return (
     <div
-      className={`fixed ${
-        isMobile ? "bottom-0 right-0 left-0 m-0" : positionClass
-      } z-50 flex justify-end`}
+      className={`transition-all duration-300 ease-in-out ${
+        fixed ? "fixed" : "flex flex-col items-center"
+      } ${fixed ? buttonPositionClass : ""} z-50`}
       style={customStyles}
     >
-      {!isOpen && (
+      {!isOpen ? (
         <Button
-          onClick={() => setIsOpen(true)}
-          className={`${buttonRoundedCorners} h-12 w-12 p-0 shadow-lg bg-primary ${
+          onClick={handleToggle}
+          className={`${buttonRoundedCorners} h-12 w-12 p-0 shadow-[0_0_30px_rgba(0,0,0,0.1)] bg-primary ${
             animated ? "hover:scale-110 transition-all duration-300" : ""
-          } ${isMobile ? "mr-4 mb-4" : ""}`}
+          } ${!fixed ? buttonPositionClass : ""}`}
         >
-          <ChatIcon
-            style={{ width: "22px", height: "22px", fill: "currentColor" }}
-            className={`text-primary-foreground ${
-              animated
-                ? "transition-transform duration-300 rotate-45 scale-[0.15] animate-out [animation-fill-mode:forwards]"
-                : ""
-            }`}
-            data-state={isOpen ? "open" : "closed"}
+          <IconOrImage
+            icon={ChatIcon}
+            className="h-[22px] w-[22px] text-primary-foreground fill-primary-foreground"
+            imgClassName="h-[22px] w-[22px] object-contain"
           />
         </Button>
-      )}
-
-      {isOpen && (
+      ) : (
         <>
-          <Button
-            onClick={() => setIsOpen(false)}
-            className={`${buttonRoundedCorners} h-12 w-12 p-0 shadow-lg bg-primary ${
-              animated ? "hover:scale-110 transition-all duration-300" : ""
-            } ${isMobile ? "mx-4 mb-4" : ""}`}
-          >
-            <ChevronDown
-              style={{ width: "22px", height: "22px", fill: "currentColor" }}
-              className={`text-primary-foreground ${
-                animated
-                  ? "transition-transform duration-300 -rotate-45 animate-out [animation-fill-mode:forwards]"
-                  : ""
-              }`}
-            />
-          </Button>
           <Card
-            className={`absolute ${
-              isMobile && mobileFullScreen
-                ? "bottom-0 right-0 left-0 w-full h-[100dvh] rounded-none"
-                : `bottom-16 right-0 ${roundedCorners}`
-            } flex flex-col shadow-xl overflow-hidden ${
+            className={`border-none ${fixed ? "fixed mb-8" : "mb-4"} ${
+              isMobile && mobileFullScreen && fixed
+                ? "bottom-0 right-0 w-full h-[100dvh] rounded-none mb-0"
+                : `rounded-md ${
+                    !isMobile ? positionClasses[position].chatbot : ""
+                  } max-h-[calc(100vh-6rem)]` // equivalent of pt-4
+            } flex flex-col shadow-[0_0_45px_rgba(0,0,0,0.15)] overflow-hidden ${
               animated ? "animate-in slide-in-from-bottom-2 duration-200" : ""
             }`}
             style={{
-              width: !isMobile || !mobileFullScreen ? width : undefined,
-              height: !isMobile || !mobileFullScreen ? height : undefined,
+              ...(fixed
+                ? {
+                    width: !isMobile || !mobileFullScreen ? width : undefined,
+                  }
+                : { maxWidth: width }),
+              height:
+                !isMobile || !mobileFullScreen || !fixed
+                  ? isMobile && !fixed
+                    ? "475px"
+                    : height
+                  : undefined,
             }}
           >
             <div
-              className={`flex bg-background items-center p-4 border-b relative z-20`}
+              className={`flex bg-background items-center p-4 relative z-20 ${
+                hasOverflow && !isScrolledTop ? "border-b" : ""
+              }`}
             >
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setIsOpen(false)}
-                className="mr-2"
+                onClick={handleToggle}
+                className="mr-2 z-20"
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="h-12 w-12" />
               </Button>
-              {showAvatar && (
-                <Avatar className={`h-8 w-8 bg-accent ${roundedCorners}`}>
-                  <AvatarFallback className={roundedCorners}>
-                    <BotIcon className="h-6 w-6 text-accent-foreground" />
-                  </AvatarFallback>
-                </Avatar>
-              )}
-              <div className="flex flex-col ml-4">
-                <h3 className="font-semibold text-base leading-none">
-                  {title}
-                </h3>
-                <div className="flex items-center gap-1 mt-1">
-                  <DescriptionIcon className="h-3 w-3" />
-                  <span className="text-xs text-muted-foreground">
-                    {description}
-                  </span>
+              <div className="flex-1">
+                <div
+                  className={`absolute inset-0 flex justify-center items-center transition-all duration-200 ${
+                    isScrolledTop
+                      ? "opacity-100 visible delay-200"
+                      : "opacity-0 invisible delay-0 pointer-events-none"
+                  }`}
+                >
+                  <span className="font-semibold">Amtivo Chatbot</span>
+                </div>
+                <div
+                  className={`flex items-center transition-all duration-200 ${
+                    isScrolledTop
+                      ? "opacity-0 invisible delay-0 pointer-events-none"
+                      : "opacity-100 visible delay-200"
+                  }`}
+                >
+                  {showAvatar && (
+                    <Avatar
+                      className={`h-8 w-8 bg-border/60 rounded-md flex items-center justify-center`}
+                    >
+                      <IconOrImage
+                        icon={BotIcon}
+                        className="h-6 w-6 text-accent-foreground"
+                        imgClassName="h-6 w-6 object-contain"
+                      />
+                    </Avatar>
+                  )}
+                  <div className="flex flex-col ml-4">
+                    <h3 className="font-semibold text-base leading-none">
+                      {title}
+                    </h3>
+                    <div className="flex items-center gap-1 mt-1">
+                      <DescriptionIcon className="h-3 w-3" />
+                      <span className="text-xs text-muted-foreground">
+                        {description}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <ScrollArea
-              className="flex-1 px-4 relative z-0 overflow-hidden"
-              onScroll={handleScroll}
-            >
-              <div className="flex flex-col justify-start h-full space-y-4 mt-4 -mb-4">
+            <ScrollArea className="flex-1 px-4 relative z-0 overflow-hidden">
+              <div className="flex flex-col justify-start space-y-4 mt-4 -pb-4 -mb-8">
+                <div className="flex flex-col items-center justify-center mb-6">
+                  <Avatar
+                    className={`h-20 w-20 rounded-md bg-border/60 flex items-center justify-center`}
+                  >
+                    <IconOrImage
+                      icon={BotIcon}
+                      className="h-16 w-16 text-accent-foreground"
+                      imgClassName="h-16 w-16 object-contain"
+                    />
+                  </Avatar>
+                  <p className="font-normal my-2">AI Agent answers instantly</p>
+                  <p className="font-light text-muted-foreground">
+                    Ask for the team if needed
+                  </p>
+                </div>
+
                 {chatMessages.map((message: ChatMessage, index) => (
                   <div
                     key={message.id}
@@ -274,25 +374,27 @@ export default function ChatBot({
                       className={`flex relative ${
                         message.role === "user"
                           ? "justify-end"
-                          : "justify-start items-start gap-3"
+                          : "justify-start items-end gap-3"
                       }`}
                     >
                       {showAvatar && message.role !== "user" && (
                         <Avatar
-                          className={`h-8 w-8 bg-accent ${roundedCorners}`}
+                          className={`h-8 w-8 bg-border/60 rounded-md flex items-center justify-center`}
                         >
-                          <AvatarFallback className={roundedCorners}>
-                            <BotIcon className="h-6 w-6 text-accent-foreground" />
-                          </AvatarFallback>
+                          <IconOrImage
+                            icon={BotIcon}
+                            className="h-6 w-6 text-accent-foreground"
+                            imgClassName="h-6 w-6 object-contain"
+                          />
                         </Avatar>
                       )}
 
                       <div className="group relative">
                         <div
-                          className={`p-4 max-w-auto whitespace-pre-wrap ${roundedCorners} ${
+                          className={`p-4 max-w-auto whitespace-pre-wrap rounded-md ${
                             message.role === "user"
                               ? "bg-primary text-primary-foreground ml-8"
-                              : "bg-accent mr-8"
+                              : "bg-border/70 mr-8 font-light font-inter text-md"
                           }`}
                         >
                           {message.content}
@@ -340,9 +442,9 @@ export default function ChatBot({
                     {showTimestamp &&
                       index === chatMessages.length - 1 &&
                       message.role === "assistant" && (
-                        <div className="text-xs text-muted-foreground mt-1 text-left ml-11">
+                        <div className="text-xs text-muted-foreground mt-1 text-left ml-11 mb-4">
                           Bot ·{" "}
-                          <TimeAgo
+                          <ClientTimeAgo
                             date={message.createdAt}
                             formatter={(value, unit) => {
                               if (unit === "second" && value < 60) {
@@ -359,28 +461,72 @@ export default function ChatBot({
                   </div>
                 ))}
                 <div ref={scrollRef} />
+                {isLoading &&
+                  (!chatMessages.length ||
+                    chatMessages[chatMessages.length - 1].role !==
+                      "assistant") && (
+                    <div className="flex flex-col items-start">
+                      <div className="flex items-start gap-3">
+                        {showAvatar && (
+                          <Avatar
+                            className={`h-8 w-8 bg-border/60 rounded-md flex items-center justify-center`}
+                          >
+                            <IconOrImage
+                              icon={BotIcon}
+                              className="h-6 w-6 text-accent-foreground"
+                              imgClassName="h-6 w-6 object-contain"
+                            />
+                          </Avatar>
+                        )}
+                        <div className="group relative">
+                          <TypingAnimation />
+                        </div>
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1 text-left ml-11 mb-4">
+                        Bot · thinking...
+                      </div>
+                    </div>
+                  )}
               </div>
             </ScrollArea>
 
-            <form
-              onSubmit={handleSubmit}
-              className={`p-4 border-t flex gap-4 bg-background`}
-            >
-              <Input
-                placeholder={placeholderText}
-                name="prompt"
-                value={input}
-                onChange={handleInputChange}
-                className={`text-md ${roundedCorners}`}
-              />
-              <Button
-                type="submit"
-                className={`${roundedCorners} h-10 w-10 min-w-[40px] p-0 flex items-center justify-center`}
-              >
-                <Send className={`h-4 w-4`} />
-              </Button>
+            <form onSubmit={handleSubmit} className="px-4 pb-4 bg-background">
+              <div className="relative flex items-center w-full rounded-full shadow-[0_0_10px_rgba(0,0,0,0.075)]">
+                <Input
+                  placeholder={placeholderText}
+                  name="prompt"
+                  value={input}
+                  onChange={handleInputChange}
+                  className="w-full rounded-full pr-14 py-6 text-base leading-normal"
+                />
+                <div className="absolute right-2 flex items-center">
+                  <Button
+                    type="submit"
+                    size="icon"
+                    disabled={!input.trim() || isLoading}
+                    className="h-9 w-9 rounded-full bg-primary hover:bg-primary/90"
+                  >
+                    <ArrowUp className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             </form>
           </Card>
+          <Button
+            onClick={handleToggle}
+            className={`${buttonRoundedCorners} h-12 w-12 p-0 shadow-lg bg-primary ${
+              animated ? "hover:scale-110 transition-all duration-300" : ""
+            } ${isMobile ? "m-4" : ""} ${!fixed ? buttonPositionClass : ""}`}
+          >
+            <ChevronDown
+              style={{ width: "22px", height: "22px", fill: "currentColor" }}
+              className={`text-primary-foreground ${
+                animated
+                  ? "transition-transform duration-300 -rotate-45 animate-out [animation-fill-mode:forwards]"
+                  : ""
+              }`}
+            />
+          </Button>
         </>
       )}
     </div>
