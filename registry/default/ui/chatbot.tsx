@@ -232,7 +232,7 @@ export default function ChatBot({
   );
 
   useEffect(() => {
-    if (isMobile && mobileFullScreen && isOpen) {
+    if (isMobile && mobileFullScreen && isOpen && fixed) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -284,7 +284,7 @@ export default function ChatBot({
               height:
                 !isMobile || !mobileFullScreen || !fixed
                   ? isMobile && !fixed
-                    ? "475px"
+                    ? "550px"
                     : height
                   : undefined,
             }}
@@ -310,7 +310,7 @@ export default function ChatBot({
                       : "opacity-0 invisible delay-0 pointer-events-none"
                   }`}
                 >
-                  <span className="font-semibold">Amtivo Chatbot</span>
+                  <span className="font-semibold">chatbot</span>
                 </div>
                 <div
                   className={`flex items-center transition-all duration-200 ${

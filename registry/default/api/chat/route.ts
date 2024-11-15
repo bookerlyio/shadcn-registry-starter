@@ -7,7 +7,7 @@ const redis = Redis.fromEnv();
 
 const ratelimit = new Ratelimit({
   redis: redis,
-  limiter: Ratelimit.slidingWindow(100, "1 d"), // 100 messages / 1 d
+  limiter: Ratelimit.slidingWindow(10, "1 d"), // 10 messages or 1 d
 });
 
 export async function POST(req: Request) {
